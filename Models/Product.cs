@@ -1,7 +1,7 @@
 using System.ComponentModel.DataAnnotations;
 using Shop.Models;
 
-namespace Backoffice.Models
+namespace Shop.Models
 {
     public class Product
     {
