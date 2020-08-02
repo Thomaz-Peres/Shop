@@ -9,7 +9,7 @@ using Shop.Models;
 
 namespace Shop.Controllers
 {
-    [Route("product")]
+    [Route("products")]
     public class ProductController : ControllerBase
     {
         [HttpGet]
@@ -49,6 +49,25 @@ namespace Shop.Controllers
                 .ToListAsync();
 
             return products;
+        }
+
+        [HttpPost]
+        [Route("")]
+        public async Task<ActionResult<Product>> Post(
+            [FromServices] DataContext context,
+            [FromBody] Product model
+            )
+        {
+            if(ModelState.IsValid)
+            {
+                context.Products.Add(model);
+                await context.SaveChangesAsync();
+                return Ok(model);
+            }
+            else 
+            {
+                return BadRequest(ModelState);
+            }
         }
     }
 }
