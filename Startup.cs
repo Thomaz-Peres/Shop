@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using Shop.Data;
 
 namespace Shop
@@ -24,6 +25,7 @@ namespace Shop
 
         public void ConfigureServices(IServiceCollection services)
         {
+            services.AddCors();
             services.AddResponseCompression(option => 
             {
                 //  comprimindo o JSON antes de mandar para a tela
@@ -51,9 +53,14 @@ namespace Shop
                 };
             });
 
-            //  services.AddDbContext<DataContext>(opt => opt.UseInMemoryDatabase("Database"));
-            services.AddDbContext<DataContext>(opt => opt.UseSqlServer(Configuration.GetConnectionString("connectionString")));
-            services.AddScoped<DataContext, DataContext>();
+            services.AddDbContext<DataContext>(opt => opt.UseInMemoryDatabase("Database"));
+            //services.AddDbContext<DataContext>(opt => opt.UseSqlServer(Configuration.GetConnectionString("connectionString")));
+
+            // Register the Swagger generator, defining 1 or more Swagger documents
+            services.AddSwaggerGen(c =>
+            {
+                c.SwaggerDoc("v1", new OpenApiInfo { Title = "Shop Api", Version = "v1" });
+            });
         }
 
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
@@ -65,8 +72,22 @@ namespace Shop
 
             app.UseHttpsRedirection();
 
+            // Pegando uma especificação da API no formato JSON 
+            app.UseSwagger(); 
+
+            //  Ferramenta visual para testar a aplicação
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "Shop API V1");
+            });
+
             app.UseRouting();
 
+
+            app.UseCors(x => x
+                .AllowAnyOrigin()
+                .AllowAnyMethod()
+                .AllowAnyHeader());
             app.UseAuthentication();
             app.UseAuthorization();
 
