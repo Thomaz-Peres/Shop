@@ -11,9 +11,22 @@ using Shop.Services;
 
 namespace Shop.Controllers
 {
-    [Route("v1/users")]
+    [Route("users")]
     public class UserController : Controller
     {
+        [HttpGet]
+        [Route("")]
+        [Authorize(Roles = "manager")]
+        public async Task<ActionResult<List<User>>> Get(
+            [FromServices] DataContext context)
+        {
+            var users = await context
+                .Users
+                .AsNoTracking()
+                .ToListAsync();
+            return users;
+        }
+
         [HttpPost]
         [Route("")]
         [AllowAnonymous]
@@ -24,7 +37,7 @@ namespace Shop.Controllers
             //  Verifica se os dados são válidos
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
-
+            
             try
             {
                 context.Users.Add(model);
@@ -32,6 +45,35 @@ namespace Shop.Controllers
                 return model;
             }
             catch (Exception)
+            {
+                return BadRequest(new { message = "Não foi possível criar o usuário" });
+
+            }
+        }
+
+        [HttpPut]
+        [Route("{id:int}")]
+        [Authorize(Roles = "manager")]
+        public async Task<ActionResult<User>> Put (
+            [FromServices] DataContext context,
+            int id,
+            [FromBody]User model)
+        {
+            //  Verifica se os dados sao válidos
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            //  Verifica se o ID informado é o mesmo do modelo
+            if(id != model.Id)
+                return NotFound(new { message = "Usúario não encontrado" });
+
+            try
+            {
+                context.Entry(model).State = EntityState.Modified;
+                await context.SaveChangesAsync();
+                return model;
+            }
+            catch
             {
                 return BadRequest(new { message = "Não foi possivel criar o usúario" });
             }
@@ -45,7 +87,7 @@ namespace Shop.Controllers
         {
             var user = await context.Users
                 .AsNoTracking()
-                .Where(x => x.Username == model.Username && x.Password == model.Password)
+                .Where(x => x.Usernmae == model.Usernmae && x.Password == model.Password)
                 .FirstOrDefaultAsync();
 
             if (user == null)
